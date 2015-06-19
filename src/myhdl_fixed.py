@@ -1,10 +1,16 @@
 # -*- coding: utf-8 -*-
 __author__ = 'mnatsutani'
-import myhdl
+from myhdl import intbv
 
-def Signal_fixed(intbv):
-    None
+class Signal_fixed(intbv):
 
+    def __init__(self, w, i, q='SC_TRN', o='SC_WRAP', n=0):
+        intbv.__init__(self)
+        self.W = w
+        self.I = i
+        self.Q = q
+        self.O = o
+        self.N = n
 
 
 
@@ -14,7 +20,7 @@ def Signal_fixed(intbv):
 # SC_RND_INF
 # SC_RND_CONV
 # SC_TRN (デフォルト)
-3 SC_TRN_ZERO
+# 3 SC_TRN_ZERO
 
 # SC_SAT
 # SC_SAT_ZERO
