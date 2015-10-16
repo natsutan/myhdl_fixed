@@ -1,11 +1,17 @@
 # -*- coding: utf-8 -*-
 __author__ = 'mnatsutani'
-import math
+
+import myhdl
 from myhdl import intbv
 
+# パラメータ	値の型	説明
+# W	int(正の値)	全体のビット幅(ワード長)
+# I	int	整数部のビット幅、正負の値が指定できる
+# Q	sc_q_mode	量子化モード(省略可)
+# O	sc_o_mode	オーバーフローモード(省略可)
+# N	int	オーバーフロー用ビット数(省略可、Oのためのオプション)
 class Signal_fixed(intbv):
-
-    def __init__(self, w, i, q='SC_TRN', o='SC_WRAP', n=0, val = None):
+    def __init__(self, w, i, q='SC_TRN', o='SC_WRAP', n=0, val=None):
         self.W = w
         self.I = i
         self.Q = q
@@ -16,24 +22,12 @@ class Signal_fixed(intbv):
         max = (2 ** (self.W-1)) - 1
 
         fixed_val = self.calc_fixed_val(val)
-
-        intbv.__init__(self, min = min, max = max, val = fixed_val)
-
+        intbv.__init__(self, min=min, max=max, val=fixed_val)
 
     def calc_fixed_val(self, val):
-        if val == None:
-            return None
+        fixed = val * (2 ** (self.W - self.I))
 
-        f, i = math.modf(val)
-        print("i = %d, f = %f" % (i, f) )
-        fixed_field_width = self.W - self.I
-
-        val = int(i) << fixed_field_width
-
-        return val
-
-
-
+        return int(fixed)
 
     def fixed_mul(self, y):
         None
@@ -56,10 +50,4 @@ class Signal_fixed(intbv):
 # SC_WRAP (デフォルト)
 # SC_WRAP_SM
 
-# パラメータ	値の型	説明
-# W	int(正の値)	全体のビット幅(ワード長)
-# I	int	整数部のビット幅、正負の値が指定できる
-# Q	sc_q_mode	量子化モード(省略可)
-# O	sc_o_mode	オーバーフローモード(省略可)
-# N	int	オーバーフロー用ビット数(省略可、Oのためのオプション)
 
