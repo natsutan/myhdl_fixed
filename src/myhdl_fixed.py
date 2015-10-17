@@ -3,6 +3,8 @@ __author__ = 'mnatsutani'
 
 import myhdl
 from myhdl import intbv
+from math import modf
+
 
 # パラメータ	値の型	説明
 # W	int(正の値)	全体のビット幅(ワード長)
@@ -24,30 +26,79 @@ class Signal_fixed(intbv):
         fixed_val = self.calc_fixed_val(val)
         intbv.__init__(self, min=min, max=max, val=fixed_val)
 
-    def calc_fixed_val(self, val):
-        fixed = val * (2 ** (self.W - self.I))
+    def calc_fixed_val(self, c):
+        val = c * (2.0 ** (self.W - self.I))
+        (frac_part, int_part) = modf(val)
 
-        return int(fixed)
+        #量子化
+        if self.Q=='SC_TRN':
+            if c < 0.0:
+                val-=-1.0
+        elif self.Q=='SC_RND':
+            if frac_part >= 0.5:
+                val += 1.0
+            elif frac_part<-0.5:
+                val += 1.0
+        elif self.Q=='SC_TRN_ZERO':
+            None
+        elif self.Q==SC_RND_INF:
+            if(frac_part >= 0.5):
+                val += 1.0
+            elif(frac_part<=-0.5):
+                val -=1.0
+        elif self.Q=='SC_RND_CONV':
+            if (frac_part > 0.5) or  (frac_part == 0.5 and fmod(int_part, 2.0) ):
+                val+=1.0
+            elif (frac_part < -0.5) or (frac_part == -0.5 and fmod(int_part, 2.0)):
+                val-=1.0
+        elif self.Q=='SC_RND_ZERO':
+            if frac_part > 0.5:
+                val += 1.0
+            elif frac_part < -0.5:
+                val -= 1.0
+        elif self.Q=='SC_RND_MIN_INF':
+            if frac_part > 0.5:
+                val += 1.0
+            elif frac_part <= -0.5:
+                val -= 1.0
+        else:
+            raise ValueError
 
-    def fixed_mul(self, y):
-        None
+        return int(val)
 
     def fixed_add(self, y):
-        None
+        fx = self.float()
+        fy = y.float()
+        W = max(self.W, y.W) + 1
+        I = max(self.I, y.I) + 1
+        return Signal_fixed(W, I, self.Q, self.O, self.N, val=fx+fy)
+
+    def fixed_sub(self, y):
+        return self.fixed_add(-y)
+
+    def fixed_sadd(self, y):
+        fx = self.float()
+        fy = y.float()
+        return Signal_fixed(self.W, self.I, self.Q, self.O, self.N, val=fx+fy)
+
+    def fixed_ssub(self, y):
+        return self.fixed_sadd(-y)
 
 
-# SC_RND
-# SC_RND_ZERO
-# SC_RND_MIN_INF
-# SC_RND_INF
-# SC_RND_CONV
-# SC_TRN (デフォルト)
-# 3 SC_TRN_ZERO
+    def fixed_mul(self, y):
+        fx = self.float()
+        fy = y.float()
+        W = self.W+y.W
+        I = self.I+y.I
+        return Signal_fixed(W, I, self.Q, self.O, self.N, val=fx*fy)
 
-# SC_SAT
-# SC_SAT_ZERO
-# SC_SAT_SYM
-# SC_WRAP (デフォルト)
-# SC_WRAP_SM
+    def fixed_div(self, y):
+        W = self.W+y.W
+        I = self.I+y.I
+        return Signal_fixed(W, I, self.Q, self.O, self.N, val=fx/fy)
+
+    def float(self):
+        val = int(self)
+        return val / (2.0 ** (self.W - self.I))
 
 
